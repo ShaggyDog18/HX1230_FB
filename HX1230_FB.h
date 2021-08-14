@@ -20,8 +20,19 @@
 // otherwise each 9-bit data is transfered in 2 bytes what seems to be a problem for some HX1230 LCDs
 #define REAL_SPI9
 
+// ShaggyDog AUG-2021: use SPI2 I/F with STM32
+// reference: https://github.com/rogerclarkmelbourne/Arduino_STM32/blob/master/STM32F1/libraries/SPI/examples/using_SPI_ports/using_SPI_ports.ino
+#ifdef __arm__
+	#define	SPI_SPI2			// use SPI2 in ARM STM32
+	#define SPI1_NSS_PIN PA4    //SPI_1 Chip Select pin is PA4. You can change it to the STM32 pin you want.
+	#define	SPI2_NSS_PIN PB12   //SPI_2 Chip Select pin is PB12. You can change it to the STM32 pin you want.
+#endif
+
+
 #include <Arduino.h>
-#include <avr/pgmspace.h>
+#ifdef __AVR__
+	#include <avr/pgmspace.h>
+#endif
 
 #define CMD 0x00
 #define DAT 0x80
@@ -122,6 +133,10 @@ public:
   void setDigitMinWd(uint8_t wd) { cfont.minDigitWd = wd; }
   int printChar(int xpos, int ypos, unsigned char c);
   int printStr(int xpos, int ypos, char *str);
+  // ShaggyDog AUG-2021
+  #ifdef __AVR__
+	void print(int xpos, int ypos, const __FlashStringHelper *str);
+  #endif
   int charWidth(uint8_t _ch, bool last=true);
   int fontHeight();
   int strWidth(char *txt);

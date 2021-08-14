@@ -4,6 +4,12 @@
 
 #include <SPI.h>
 
+// ShaggyDog AUG-2021: adaptation to STM32 SPI2 I/F
+#if defined( __arm__ ) && defined( SPI_SPI2 ) 
+	//SPIClass(uint8_t mosi, uint8_t miso, uint8_t sclk, uint8_t ssel = (uint8_t)NC);
+	SPIClass SPI_2(PB15, PB14, PB13, SPI2_NSS_PIN);
+#endif
+
 #define CS_IDLE     digitalWrite(csPin, HIGH)
 #define CS_ACTIVE   digitalWrite(csPin, LOW)
 
@@ -47,8 +53,24 @@ void HX1230_FB::init()
     delay(10);
   }
   
-  SPI.begin();
-  SPI.setDataMode(SPI_MODE0);
+	// ShaggyDog AUG-2021: adaptation to ARM STM32, use SPI_2 I/F
+	// reference: https://github.com/rogerclarkmelbourne/Arduino_STM32/blob/master/STM32F1/libraries/SPI/examples/using_SPI_ports/using_SPI_ports.ino
+	#if defined( __arm__ ) && defined( SPI_SPI2 ) 
+	  SPI_2.begin(); //Initialize the SPI_2 port.
+	  //SPI_2.setBitOrder(MSBFIRST); // Set the SPI_2 bit order
+	  SPI_2.setDataMode(SPI_MODE0); //Set the  SPI_2 data mode 0
+	  //SPI_2.setClockDivider(SPI_CLOCK_DIV2);  // Use a different speed to SPI 1
+	  pinMode(SPI2_NSS_PIN, OUTPUT);
+	  #define SPI	SPI_2	// replace all SPI downbelow with SPI_2
+	#else  
+	  SPI.begin();
+	  SPI.setDataMode(SPI_MODE0);
+	  #ifdef __arm__	// default for SPI1
+		//SPI.setBitOrder(MSBFIRST);
+		pinMode(SPI1_NSS_PIN, OUTPUT);
+	  #endif
+	#endif
+	
 #ifdef __AVR__
   SPI.setClockDivider(SPI_CLOCK_DIV2);
 #endif
@@ -781,6 +803,18 @@ int HX1230_FB::printStr(int xpos, int ypos, char *str)
   if(invertCh) fillRect(xpos,x-1,y,y+cfont.ySize+1,2);
   return x;
 }
+
+
+#ifdef __AVR__
+void HX1230_FB::print(  int xpos, int ypos, const __FlashStringHelper *str) {
+	char strBuffer[SCR_WD/4+1];
+	
+  strcpy_P(strBuffer, (PGM_P)str);
+ 	printStr(xpos, ypos, strBuffer);
+}
+#endif
+
+
 // ----------------------------------------------------------------
 bool HX1230_FB::isNumber(uint8_t ch)
 {
@@ -801,47 +835,47 @@ unsigned char HX1230_FB::convertPolish(unsigned char _c)
   }
   if(dualChar) { // UTF8 coding
     switch(_c) {
-      case 133: pl = 1+9; break; // 'π'
-      case 135: pl = 2+9; break; // 'Ê'
-      case 153: pl = 3+9; break; // 'Í'
-      case 130: pl = 4+9; break; // '≥'
-      case 132: pl = dualChar==197 ? 5+9 : 1; break; // 'Ò' and '•'
-      case 179: pl = 6+9; break; // 'Û'
-      case 155: pl = 7+9; break; // 'ú'
-      case 186: pl = 8+9; break; // 'ü'
-      case 188: pl = 9+9; break; // 'ø'
-      //case 132: pl = 1; break; // '•'
-      case 134: pl = 2; break; // '∆'
-      case 152: pl = 3; break; // ' '
-      case 129: pl = 4; break; // '£'
-      case 131: pl = 5; break; // '—'
-      case 147: pl = 6; break; // '”'
-      case 154: pl = 7; break; // 'å'
-      case 185: pl = 8; break; // 'è'
-      case 187: pl = 9; break; // 'Ø'
+      case 133: pl = 1+9; break; // 'ÔøΩ'
+      case 135: pl = 2+9; break; // 'ÔøΩ'
+      case 153: pl = 3+9; break; // 'ÔøΩ'
+      case 130: pl = 4+9; break; // 'ÔøΩ'
+      case 132: pl = dualChar==197 ? 5+9 : 1; break; // 'ÔøΩ' and 'ÔøΩ'
+      case 179: pl = 6+9; break; // 'ÔøΩ'
+      case 155: pl = 7+9; break; // 'ÔøΩ'
+      case 186: pl = 8+9; break; // 'ÔøΩ'
+      case 188: pl = 9+9; break; // 'ÔøΩ'
+      //case 132: pl = 1; break; // 'ÔøΩ'
+      case 134: pl = 2; break; // 'ÔøΩ'
+      case 152: pl = 3; break; // 'ÔøΩ'
+      case 129: pl = 4; break; // 'ÔøΩ'
+      case 131: pl = 5; break; // 'ÔøΩ'
+      case 147: pl = 6; break; // 'ÔøΩ'
+      case 154: pl = 7; break; // 'ÔøΩ'
+      case 185: pl = 8; break; // 'ÔøΩ'
+      case 187: pl = 9; break; // 'ÔøΩ'
       default:  return c; break;
     }
     dualChar = 0;
   } else   
   switch(_c) {  // Windows coding
-    case 165: pl = 1; break; // •
-    case 198: pl = 2; break; // ∆
-    case 202: pl = 3; break; //  
-    case 163: pl = 4; break; // £
-    case 209: pl = 5; break; // —
-    case 211: pl = 6; break; // ”
-    case 140: pl = 7; break; // å
-    case 143: pl = 8; break; // è
-    case 175: pl = 9; break; // Ø
-    case 185: pl = 10; break; // π
-    case 230: pl = 11; break; // Ê
-    case 234: pl = 12; break; // Í
-    case 179: pl = 13; break; // ≥
-    case 241: pl = 14; break; // Ò
-    case 243: pl = 15; break; // Û
-    case 156: pl = 16; break; // ú
-    case 159: pl = 17; break; // ü
-    case 191: pl = 18; break; // ø
+    case 165: pl = 1; break; // ÔøΩ
+    case 198: pl = 2; break; // ÔøΩ
+    case 202: pl = 3; break; // ÔøΩ
+    case 163: pl = 4; break; // ÔøΩ
+    case 209: pl = 5; break; // ÔøΩ
+    case 211: pl = 6; break; // ÔøΩ
+    case 140: pl = 7; break; // ÔøΩ
+    case 143: pl = 8; break; // ÔøΩ
+    case 175: pl = 9; break; // ÔøΩ
+    case 185: pl = 10; break; // ÔøΩ
+    case 230: pl = 11; break; // ÔøΩ
+    case 234: pl = 12; break; // ÔøΩ
+    case 179: pl = 13; break; // ÔøΩ
+    case 241: pl = 14; break; // ÔøΩ
+    case 243: pl = 15; break; // ÔøΩ
+    case 156: pl = 16; break; // ÔøΩ
+    case 159: pl = 17; break; // ÔøΩ
+    case 191: pl = 18; break; // ÔøΩ
     default:  return c; break;
   }
   return pl+'~'+1;
