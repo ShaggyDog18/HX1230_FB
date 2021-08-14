@@ -135,7 +135,7 @@ public:
   int printStr(int xpos, int ypos, char *str);
   // ShaggyDog AUG-2021
   #ifdef __AVR__
-	void print(int xpos, int ypos, const __FlashStringHelper *str);
+	void printStr(int xpos, int ypos, const __FlashStringHelper *str);
   #endif
   int charWidth(uint8_t _ch, bool last=true);
   int fontHeight();

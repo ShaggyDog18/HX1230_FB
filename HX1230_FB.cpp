@@ -806,11 +806,11 @@ int HX1230_FB::printStr(int xpos, int ypos, char *str)
 
 
 #ifdef __AVR__
-void HX1230_FB::print(  int xpos, int ypos, const __FlashStringHelper *str) {
-	char strBuffer[SCR_WD/4+1];
-	
+void HX1230_FB::printStr(  int xpos, int ypos, const __FlashStringHelper *str) {
+  char strBuffer[SCR_WD/4+1];
+
   strcpy_P(strBuffer, (PGM_P)str);
- 	printStr(xpos, ypos, strBuffer);
+  printStr(xpos, ypos, strBuffer);
 }
 #endif
 
