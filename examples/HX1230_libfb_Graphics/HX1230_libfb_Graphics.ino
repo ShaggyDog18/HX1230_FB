@@ -13,9 +13,20 @@
   #8 GND - GND
 */
 
-#define LCD_RST 6
-#define LCD_CS  7
-#define LCD_BL  8
+#ifdef __arm__
+	//#define SPI_SPI1
+	#define	SPI_SPI2			// use SPI2 in ARM STM32
+  #define LCD_RST PA8
+  #define LCD_CS  PB12  // SPI2
+  #define LCD_BL  PA7
+#endif
+
+#ifdef __AVR__
+  #define LCD_RST 6
+  #define LCD_CS  7
+  #define LCD_BL  8
+#endif
+
 
 #include "HX1230_FB.h"
 #include <SPI.h>
@@ -23,9 +34,9 @@ HX1230_FB lcd(LCD_RST, LCD_CS);
 
 void setup() 
 {
-  Serial.begin(9600);
-  pinMode(LCD_BL, OUTPUT);
-  digitalWrite(LCD_BL, HIGH);
+  //Serial.begin(9600);
+  //pinMode(LCD_BL, OUTPUT);
+  //digitalWrite(LCD_BL, HIGH);
   lcd.init();
   lcd.cls();
   lcd.drawRectD(0,0,SCR_WD,SCR_HT,1);

@@ -23,6 +23,7 @@
 // ShaggyDog AUG-2021: use SPI2 I/F with STM32
 // reference: https://github.com/rogerclarkmelbourne/Arduino_STM32/blob/master/STM32F1/libraries/SPI/examples/using_SPI_ports/using_SPI_ports.ino
 #ifdef __arm__
+	//#define SPI_SPI1
 	#define	SPI_SPI2			// use SPI2 in ARM STM32
 	#define SPI1_NSS_PIN PA4    //SPI_1 Chip Select pin is PA4. You can change it to the STM32 pin you want.
 	#define	SPI2_NSS_PIN PB12   //SPI_2 Chip Select pin is PB12. You can change it to the STM32 pin you want.
@@ -47,8 +48,8 @@
 #define HX1230_DISPLAY_TEST     0xA5 // all pixels on
 #define HX1230_INVERT_OFF       0xA6 // not inverted
 #define HX1230_INVERT_ON        0xA7 // inverted
-#define HX1230_DISPLAY_ON       0XAF // display on
-#define HX1230_DISPLAY_OFF      0XAE // display off
+#define HX1230_DISPLAY_ON       0xAF // display on
+#define HX1230_DISPLAY_OFF      0xAE // display off
 #define HX1230_SCAN_START_LINE  0x40 // scrolling 0x40 + (0..63)
 #define HX1230_COM_NORMAL       0xC0 // COM remap normal
 #define HX1230_COM_REMAP        0xC8 // COM remap reverse (flip vertical)
