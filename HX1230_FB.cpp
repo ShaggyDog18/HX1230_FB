@@ -4,6 +4,8 @@
 
 #include <SPI.h>
 
+//#define CONVERT_POLISH
+
 // ShaggyDog AUG-2021: adaptation to STM32 SPI2 I/F
 #if defined( __arm__ ) && defined( SPI_SPI2 ) 
 	//SPIClass(uint8_t mosi, uint8_t miso, uint8_t sclk, uint8_t ssel = (uint8_t)NC);
@@ -52,28 +54,29 @@ void HX1230_FB::init()
     digitalWrite(rstPin, HIGH);
     delay(10);
   }
-  
+	// Init SPI interface
 	// ShaggyDog AUG-2021: adaptation to ARM STM32, use SPI_2 I/F
 	// reference: https://github.com/rogerclarkmelbourne/Arduino_STM32/blob/master/STM32F1/libraries/SPI/examples/using_SPI_ports/using_SPI_ports.ino
-	#if defined( __arm__ ) && defined( SPI_SPI2 ) 
+	#if defined( __arm__ ) && defined( SPI_SPI2 ) // for ARM SPI2
 	  SPI_2.begin(); //Initialize the SPI_2 port.
 	  //SPI_2.setBitOrder(MSBFIRST); // Set the SPI_2 bit order
 	  SPI_2.setDataMode(SPI_MODE0); //Set the  SPI_2 data mode 0
 	  //SPI_2.setClockDivider(SPI_CLOCK_DIV2);  // Use a different speed to SPI 1
 	  pinMode(SPI2_NSS_PIN, OUTPUT);
 	  #define SPI	SPI_2	// replace all SPI downbelow with SPI_2
-	#else  
+	#else  // same for AVR and ARM SPI1
 	  SPI.begin();
 	  SPI.setDataMode(SPI_MODE0);
-	  #ifdef __arm__	// default for SPI1
+	  #ifdef __arm__	// for ARM SPI1
 		//SPI.setBitOrder(MSBFIRST);
 		pinMode(SPI1_NSS_PIN, OUTPUT);
 	  #endif
 	#endif
 	
-#ifdef __AVR__
-  SPI.setClockDivider(SPI_CLOCK_DIV2);
-#endif
+	#ifdef __AVR__
+		SPI.setClockDivider(SPI_CLOCK_DIV2);
+	#endif
+
   CS_ACTIVE;
   for(int i=0; i<sizeof(initData); i++) sendCmd(pgm_read_byte(initData+i));
   CS_IDLE;
@@ -709,7 +712,9 @@ int HX1230_FB::fontHeight()
 // ----------------------------------------------------------------
 int HX1230_FB::charWidth(uint8_t c, bool last)
 {
+#ifdef CONVERT_POLISH
   c = convertPolish(c);
+#endif
   if(c < cfont.firstCh || c > cfont.lastCh)
     return c==' ' ?  1 + cfont.xSize/2 : 0;
   if (cfont.xSize > 0) return cfont.xSize;
@@ -742,7 +747,9 @@ int HX1230_FB::printChar(int xpos, int ypos, unsigned char c)
   int fht8 = (cfont.ySize + 7) / 8, wd, fwd = cfont.xSize;
   if(fwd < 0)  fwd = -fwd;
 
+#ifdef CONVERT_POLISH
   c = convertPolish(c);
+#endif
   if(c < cfont.firstCh || c > cfont.lastCh)  return c==' ' ?  1 + fwd/2 : 0;
 
   int x,y8,b,cdata = (c - cfont.firstCh) * (fwd*fht8+1) + 4;
@@ -803,7 +810,6 @@ int HX1230_FB::printStr(int xpos, int ypos, char *str)
   if(invertCh) fillRect(xpos,x-1,y,y+cfont.ySize+1,2);
   return x;
 }
-
 
 #ifdef __AVR__
 void HX1230_FB::printStr(  int xpos, int ypos, const __FlashStringHelper *str) {
